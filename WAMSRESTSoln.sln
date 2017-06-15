@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AMS.REST", "AMS.REST\AMS.REST.csproj", "{FCC89E1C-5C06-49A0-B759-531B3F58BAAD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AMS.REST.Test", "AMS.REST.Test\AMS.REST.Test.csproj", "{9C3D6DD9-283C-48E0-B9E9-FD0B224200ED}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FCC89E1C-5C06-49A0-B759-531B3F58BAAD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FCC89E1C-5C06-49A0-B759-531B3F58BAAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FCC89E1C-5C06-49A0-B759-531B3F58BAAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FCC89E1C-5C06-49A0-B759-531B3F58BAAD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C3D6DD9-283C-48E0-B9E9-FD0B224200ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C3D6DD9-283C-48E0-B9E9-FD0B224200ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C3D6DD9-283C-48E0-B9E9-FD0B224200ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C3D6DD9-283C-48E0-B9E9-FD0B224200ED}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
