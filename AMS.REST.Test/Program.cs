@@ -20,7 +20,7 @@ namespace AMS.REST.Test
         WHEN: 6/2017
         WHAT: Sample code for AAD authentication, AMS access, Azure Storage access all via REST API without dependency on any special library.
         WHY:  ACS authN will be deprecated and customers are advised to migrate to AAD authentication for AMS access.
-        DOC:  A companion doc has been created.
+        DOC:  A companion doc has been created in Azure Doc Center.
      */
     class Program
     {
@@ -35,6 +35,7 @@ namespace AMS.REST.Test
 
             XmlDocument objXmlDocument;
             string FORMAT = "{0,-55}{1}";
+            string requestBody;
             //string url, requestBody, path, assetName, assetId, resourcePath;
             //string processorId, preset, jobName, outputAssetName;
             //byte[] body;
@@ -45,7 +46,7 @@ namespace AMS.REST.Test
             string restapiuri = System.Configuration.ConfigurationManager.AppSettings["restapiuri"];
             //string authorizationcode = Utils.GetAuthorizationCode(System.Configuration.ConfigurationManager.AppSettings["clientid"], System.Configuration.ConfigurationManager.AppSettings["clientsecret"]);
 
-            int id = 0; //test different AMS REST API with AAD authN
+            int id = 0; //choose an integer between 0 and 10 to test 11 AMS REST API calls with JWT token
             switch (id)
             {
                 case 0: //list MediaProcessors
@@ -64,44 +65,15 @@ namespace AMS.REST.Test
                         Console.WriteLine(FORMAT, objXmlNode.InnerText, objXmlNode.ParentNode.SelectSingleNode("Path").InnerText);
                     }
                     break;
-                //case 2: //list IPrograms
-                //    objXmlDocument = AMSClient.MakeRestCall("GET", acsBearerToken, mediaServicesApiServerUri, "Programs", null);
-                //    Console.WriteLine(FORMAT, "ID", "NAME");
-                //    foreach (XmlNode objXmlNode in objXmlDocument.GetElementsByTagName("Id"))
-                //    {
-                //        Console.WriteLine(FORMAT, objXmlNode.InnerText, objXmlNode.ParentNode.SelectSingleNode("Name").InnerText);
-                //    }
-                //    break;
-                //case 3: //list IChannels
-                //    objXmlDocument = AMSClient.MakeRestCall("GET", acsBearerToken, mediaServicesApiServerUri, "Channels", null);
-                //    Console.WriteLine(FORMAT, "ID", "NAME");
-                //    foreach (XmlNode objXmlNode in objXmlDocument.GetElementsByTagName("Id"))
-                //    {
-                //        Console.WriteLine(FORMAT, objXmlNode.InnerText, objXmlNode.ParentNode.SelectSingleNode("Name").InnerText);
-                //    }
-                //    break;
-                //case 4: //IChannel.Reset(): the channel must be started first
-                //    objXmlDocument = AMSClient.MakeRestCall("POST", acsBearerToken, mediaServicesApiServerUri, "Channels('nb:chid:UUID:d7835b7e-2848-4737-8fa5-e2b8608c518a')/Reset", null);   //willzhanmediaservice2
-                //    break;
-                //case 5: //update channel: the channel must be stopped first
-                //    requestBody = string.Format("{{\"Output\":{{\"Hls\":{{\"FragmentsPerSegment\":{0}}}}}}}", "1");
-                //    //requestBody = "{\"Output\":{\"Hls\":{\"FragmentsPerSegment\": 1}}}"; //the doc is incorrect
-                //    objXmlDocument = AMSClient.MakeRestCall("PATCH", acsBearerToken, mediaServicesApiServerUri, "Channels('nb:chid:UUID:d7835b7e-2848-4737-8fa5-e2b8608c518a')", requestBody);   //willzhanmediaservice2
-                //    break;
-                //case 6: //update program
-                //    requestBody = "{\"ArchiveWindowLength\":\"PT1H\"}";
-                //    objXmlDocument = AMSClient.MakeRestCall("PATCH", acsBearerToken, mediaServicesApiServerUri, "Programs('nb:pgid:UUID:2a8bd3bc-ebd6-4f20-bb99-f924e1ca8995')", requestBody);   //willzhanmediaservice2
-                //    break;
-                ////STEPS to create an asset and upload a file
-                //case 7: //create an empty IAsset
-                //    requestBody = "{\"Name\":\"RESTTEST\"}";
-                //    objXmlDocument = AMSClient.MakeRestCall("POST", acsBearerToken, mediaServicesApiServerUri, "Assets", requestBody);   //willzhanmediaservice2
-                //    break;
-                //case 8: //set AccessPolicy for writing
-                //    requestBody = "{\"Name\": \"RESTTESTAccessPolicy\", \"DurationInMinutes\" : \"3000\", \"Permissions\" : 2 }";
-                //    objXmlDocument = AMSClient.MakeRestCall("POST", acsBearerToken, mediaServicesApiServerUri, "AccessPolicies", requestBody);
-                //    break;
-                case 9: //list assets
+                case 2:  //list StreamingEndpoints
+                    objXmlDocument = AMSClient.MakeRestCall("GET", jwt, restapiuri, "/StreamingEndpoints", null);
+                    Console.WriteLine("{0,-55}{1,-55}{2,-20}{3}", "Id", "Name", "ScaleUnits", "HostName");
+                    foreach (XmlNode objXmlNode in objXmlDocument.GetElementsByTagName("Id"))
+                    {
+                        Console.WriteLine("{0,-55}{1,-55}{2,-20}{3}", objXmlNode.InnerText, objXmlNode.ParentNode.SelectSingleNode("Name").InnerText, objXmlNode.ParentNode.SelectSingleNode("ScaleUnits").InnerText, objXmlNode.ParentNode.SelectSingleNode("HostName").InnerText);
+                    }
+                    break;
+                case 3: //list IAssets
                     objXmlDocument = AMSClient.MakeRestCall("GET", jwt, restapiuri, "/Assets", null);
                     Console.WriteLine(FORMAT, "ID", "NAME");
                     foreach (XmlNode objXmlNode in objXmlDocument.GetElementsByTagName("Id"))
@@ -109,7 +81,7 @@ namespace AMS.REST.Test
                         Console.WriteLine(FORMAT, objXmlNode.InnerText, objXmlNode.ParentNode.SelectSingleNode("Name").InnerText);
                     }
                     break;
-                case 10: //list AccessPolicy
+                case 4: //list AccessPolicy
                     objXmlDocument = AMSClient.MakeRestCall("GET", jwt, restapiuri, "/AccessPolicies", null);
                     Console.WriteLine(FORMAT, "ID", "NAME");
                     foreach (XmlNode objXmlNode in objXmlDocument.GetElementsByTagName("Id"))
@@ -117,18 +89,47 @@ namespace AMS.REST.Test
                         Console.WriteLine(FORMAT, objXmlNode.InnerText, objXmlNode.ParentNode.SelectSingleNode("Name").InnerText);
                     }
                     break;
+                case 5: //list IChannels
+                    objXmlDocument = AMSClient.MakeRestCall("GET", jwt, restapiuri, "/Channels", null);
+                    Console.WriteLine(FORMAT, "ID", "NAME");
+                    foreach (XmlNode objXmlNode in objXmlDocument.GetElementsByTagName("Id"))
+                    {
+                        Console.WriteLine(FORMAT, objXmlNode.InnerText, objXmlNode.ParentNode.SelectSingleNode("Name").InnerText);
+                    }
+                    break;
+                case 6: //list IPrograms
+                    objXmlDocument = AMSClient.MakeRestCall("GET", jwt, restapiuri, "/Programs", null);
+                    Console.WriteLine(FORMAT, "ID", "NAME");
+                    foreach (XmlNode objXmlNode in objXmlDocument.GetElementsByTagName("Id"))
+                    {
+                        Console.WriteLine(FORMAT, objXmlNode.InnerText, objXmlNode.ParentNode.SelectSingleNode("Name").InnerText);
+                    }
+                    break;
+                case 7: //IChannel.Reset(): the channel must be started first
+                    objXmlDocument = AMSClient.MakeRestCall("POST", jwt, restapiuri, "/Channels('nb:chid:UUID:5c077dd2-e7f2-4814-8f53-e432c1d9f06a')/Reset", null);
+                    break;               
+                case 8: //update program
+                    requestBody = "{\"ArchiveWindowLength\":\"PT1H\"}";
+                    objXmlDocument = AMSClient.MakeRestCall("PATCH", jwt, restapiuri, "/Programs('nb:pgid:UUID:a3f5e002-3cb9-4d7e-acd3-349d64c4c863')", requestBody);
+                    break;
+                case 9: //update channel: the channel must be stopped first
+                    requestBody = string.Format("{{\"Output\":{{\"Hls\":{{\"FragmentsPerSegment\":{0}}}}}}}", "1");
+                    //requestBody = "{\"Output\":{\"Hls\":{\"FragmentsPerSegment\": 1}}}"; //the doc is incorrect
+                    objXmlDocument = AMSClient.MakeRestCall("PATCH", jwt, restapiuri, "/Channels('nb:chid:UUID:5c077dd2-e7f2-4814-8f53-e432c1d9f06a')", requestBody);
+                    break;
+                //STEPS to create an asset and upload a file
+                case 10: //create an empty IAsset
+                    requestBody = "{\"Name\":\"REST_test_asset\"}";
+                    objXmlDocument = AMSClient.MakeRestCall("POST", jwt, restapiuri, "/Assets", requestBody);  
+                    break;
+                //case 8: //set AccessPolicy for writing
+                //    requestBody = "{\"Name\": \"RESTTESTAccessPolicy\", \"DurationInMinutes\" : \"3000\", \"Permissions\" : 2 }";
+                //    objXmlDocument = AMSClient.MakeRestCall("POST", acsBearerToken, mediaServicesApiServerUri, "AccessPolicies", requestBody);
+                //    break;
                 //case 11: //create SAS locator: Type: 1
                 //    requestBody = "{\"AccessPolicyId\": \"nb:pid:UUID:fbc28148-3e93-4bc9-892e-03579aa6d1c6\", \"AssetId\" : \"nb:cid:UUID:d29545ff-0300-80bd-fc4c-f1e4b3b939f8\", \"StartTime\" : \"2015-02-12T16:45:53\", \"Type\" : 1 }";
                 //    objXmlDocument = AMSClient.MakeRestCall("POST", acsBearerToken, mediaServicesApiServerUri, "Locators", requestBody);
                 //    break;
-                case 12: //list locators
-                    objXmlDocument = AMSClient.MakeRestCall("GET", jwt, restapiuri, "/Locators", null);
-                    Console.WriteLine("{0,-55}{1,-55}{2,-10}{3}", "LocatorId", "AssetId", "Type", "LocatorPath");
-                    foreach (XmlNode objXmlNode in objXmlDocument.GetElementsByTagName("Id"))
-                    {
-                        Console.WriteLine("{0,-55}{1,-55}{2,-10}{3}", objXmlNode.InnerText, objXmlNode.ParentNode.SelectSingleNode("AssetId").InnerText, objXmlNode.ParentNode.SelectSingleNode("Type").InnerText, objXmlNode.ParentNode.SelectSingleNode("Path").InnerText);
-                    }
-                    break;
                 //case 13: //upload single file (Using Azure Storage REST API with SAS authentication)
                 //    path = @"C:\Workspace\Destination\Input\SingileFile\RexonaCommercial.mp4";
                 //    body = AzureStorageClient.GetBytesFromFile(path);
@@ -170,23 +171,14 @@ namespace AMS.REST.Test
                 //    assetName = "ZypeRest07";
                 //    RunWorkflow(assetName, path, acsBearerToken, mediaServicesApiServerUri);
                 //    break;
-                case 20:  //list StreamingEndpoint
-                    objXmlDocument = AMSClient.MakeRestCall("GET", jwt, restapiuri, "/StreamingEndpoints", null);
-                    Console.WriteLine("{0,-55}{1,-55}{2,-20}{3}", "Id", "Name", "ScaleUnits", "HostName");
-                    foreach (XmlNode objXmlNode in objXmlDocument.GetElementsByTagName("Id"))
-                    {
-                        Console.WriteLine("{0,-55}{1,-55}{2,-20}{3}", objXmlNode.InnerText, objXmlNode.ParentNode.SelectSingleNode("Name").InnerText, objXmlNode.ParentNode.SelectSingleNode("ScaleUnits").InnerText, objXmlNode.ParentNode.SelectSingleNode("HostName").InnerText);
-                    }
-                    break;
                 //case 21: //scale StreamingEndpoint
                 //    requestBody = "{\"scaleUnits\" : 1}";  //“scaleUnit” in this case is not a property on an Entity, but rather a parameter passed to the Scale action on an StreamingEndpoint entity (The POST request below is to invoke the action). I believe the parameter name has to internally exactly match (unfortunately not case insensitive match) the parameter name in the signature of our C# method that gets called for this action. As coding convention, first letter of a parameter should be lower case, which led to this effect.
                 //    resourcePath = string.Format("StreamingEndpoints('{0}')/Scale", System.Web.HttpUtility.UrlEncode("nb:oid:UUID:364e57ac-35be-0d26-05f5-6fd00b3f33fd"));
                 //    objXmlDocument = AMSClient.MakeRestCall("POST", acsBearerToken, mediaServicesApiServerUri, resourcePath, requestBody);
                 //    break;
-                //case 22: //create a channel
-                //    requestBody = "{\"Id\":null,\"Name\":\"testchannel001\",\"Description\":\"\",\"Created\":\"2015-01-01T00:00:00\",\"LastModified\":\"2015-01-01T00:00:00\",\"State\":null,\"Input\":{\"KeyFrameInterval\":null,\"StreamingProtocol\":\"FragmentedMP4\",\"AccessControl\":{\"IP\":{\"Allow\":[{\"Name\":\"testName1\",\"Address\":\"0.0.0.0\",\"SubnetPrefixLength\":0}]}},\"Endpoints\":[]},\"Preview\":{\"AccessControl\":{\"IP\":{\"Allow\":[{\"Name\":\"testName1\",\"Address\":\"0.0.0.0\",\"SubnetPrefixLength\":0}]}},\"Endpoints\":[]},\"Output\":{\"Hls\":{\"FragmentsPerSegment\":1}},\"CrossSiteAccessPolicies\":{\"ClientAccessPolicy\":null,\"CrossDomainPolicy\":null}}";
-                //    resourcePath = "Channels";
-                //    objXmlDocument = AMSClient.MakeRestCall("POST", acsBearerToken, mediaServicesApiServerUri, resourcePath, requestBody);
+                //case 10: //create a channel
+                //    requestBody = "{\"Id\":null,\"Name\":\"testchannel002\",\"Description\":\"\",\"Created\":\"2017-06-01T00:00:00\",\"LastModified\":\"2017-06-14T00:00:00\",\"State\":null,\"Input\":{\"KeyFrameInterval\":null,\"StreamingProtocol\":\"FragmentedMP4\",\"AccessControl\":{\"IP\":{\"Allow\":[{\"Name\":\"testName1\",\"Address\":\"0.0.0.0\",\"SubnetPrefixLength\":0}]}},\"Endpoints\":[]},\"Preview\":{\"AccessControl\":{\"IP\":{\"Allow\":[{\"Name\":\"testName1\",\"Address\":\"0.0.0.0\",\"SubnetPrefixLength\":0}]}},\"Endpoints\":[]},\"Output\":{\"Hls\":{\"FragmentsPerSegment\":1}},\"CrossSiteAccessPolicies\":{\"ClientAccessPolicy\":null,\"CrossDomainPolicy\":null}}";
+                //    objXmlDocument = AMSClient.MakeRestCall("POST", jwt, restapiuri, "/Channels", requestBody);
                 //    break;
                 //case 30: //create Azure storage account
                 //    CreateAzureStorageAccount();
@@ -197,10 +189,6 @@ namespace AMS.REST.Test
                 //case 32: //GetAccountDetails
                 //    ManagementRESTAPIHelper helper = new ManagementRESTAPIHelper("https://management.core.windows.net", "A3022B01D70924D819CBD0DC118D22ACAC29DE36", "2db39a66-f5c5-4b03-9d1c-71018352379b");
                 //    helper.GetAccountDetails("willzhanmswest");
-                //    break;
-                //case 33: //AAD AuthN - Service Principal
-                //    jwt = Utils.GetUrlEncodedJWT(System.Configuration.ConfigurationManager.AppSettings["clientid"], System.Configuration.ConfigurationManager.AppSettings["clientsecret"]);
-                //    Console.WriteLine(jwt);
                 //    break;
                 default:
                     break;

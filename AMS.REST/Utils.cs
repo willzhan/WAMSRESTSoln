@@ -18,6 +18,7 @@ namespace AMS.REST
             string body = string.Format("resource={0}&client_id={1}&client_secret={2}&grant_type=client_credentials", HttpUtility.UrlEncode(resource), clientId, HttpUtility.UrlEncode(clientSecret));
 
             string jwt = null;
+            string refresh_token = null;
 
             HttpWebResponse response = MakeHttpRequest(aadsts, body);
 
