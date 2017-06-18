@@ -1,4 +1,4 @@
-# Azure AD Authentication for Azure Media Services Access: Both via REST API
+### Azure AD Authentication for Azure Media Services Access: Both via REST API
 For some customers, we need a way to use only REST API for Azure AD authentication and subsequent Azure Media Services access, without relying on any of Azure AD libraries or Azure Media Services .NET SDK. This sample presents such a solution. Since the code is all REST API calls without dependency on any Azure AD or Azure Media Services library, the code can be easily translated to any other programming languages.
 
 The sample code has 2 parts:
