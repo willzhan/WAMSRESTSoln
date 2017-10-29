@@ -6,9 +6,9 @@ using System.Xml.Linq;
 namespace AMS.REST.Test
 {
     /*NOTES:
-        Please see the doc for description.
+        Please see my Azure doc for details: https://docs.microsoft.com/en-us/azure/media-services/media-services-rest-connect-with-aad
         This sample solution demonstrates/contains 3 features:
-             1.	Azure AD authentication via Client Credentials grant through only REST API;
+             1.	Azure AD authentication using Service Principal via Client Credentials grant through only REST API;
              2.	Azure Media Services access through only REST API;
              3.	Azure Storage access through only REST API (as used for creating a media service account, again via REST API).
     
@@ -20,7 +20,7 @@ namespace AMS.REST.Test
         WHEN: 6/2017
         WHAT: Sample code for AAD authentication, AMS access, Azure Storage access all via REST API without dependency on any special library.
         WHY:  ACS authN will be deprecated and customers are advised to migrate to AAD authentication for AMS access.
-        DOC:  A companion doc has been created in Azure Doc Center.
+        DOC:  A companion doc has been created in Azure Doc Center. https://docs.microsoft.com/en-us/azure/media-services/media-services-rest-connect-with-aad
      */
     class Program
     {
@@ -35,18 +35,19 @@ namespace AMS.REST.Test
 
             XmlDocument objXmlDocument;
             string FORMAT = "{0,-55}{1}";
-            string requestBody;
+            string requestBody, path;
+            string assetId, policyId;
             //string url, requestBody, path, assetName, assetId, resourcePath;
             //string processorId, preset, jobName, outputAssetName;
             //byte[] body;
 
             //AAD Authentication - Client Credentials grant
             string jwt = Utils.GetUrlEncodedJWT(System.Configuration.ConfigurationManager.AppSettings["clientid"], System.Configuration.ConfigurationManager.AppSettings["clientsecret"]);
-            Console.WriteLine("JWT = {0}", jwt);
+            //Console.WriteLine("JWT = {0}", jwt);
             string restapiuri = System.Configuration.ConfigurationManager.AppSettings["restapiuri"];
             //string authorizationcode = Utils.GetAuthorizationCode(System.Configuration.ConfigurationManager.AppSettings["clientid"], System.Configuration.ConfigurationManager.AppSettings["clientsecret"]);
 
-            int id = 0; //choose an integer between 0 and 10 to test 11 AMS REST API calls with JWT token
+            int id = 101; //choose an integer between 0 and 10 to test 11 AMS REST API calls with JWT token
             switch (id)
             {
                 case 0: //list MediaProcessors
@@ -122,40 +123,61 @@ namespace AMS.REST.Test
                     requestBody = "{\"Name\":\"REST_test_asset\"}";
                     objXmlDocument = AMSClient.MakeRestCall("POST", jwt, restapiuri, "/Assets", requestBody);  
                     break;
-                //case 8: //set AccessPolicy for writing
-                //    requestBody = "{\"Name\": \"RESTTESTAccessPolicy\", \"DurationInMinutes\" : \"3000\", \"Permissions\" : 2 }";
-                //    objXmlDocument = AMSClient.MakeRestCall("POST", acsBearerToken, mediaServicesApiServerUri, "AccessPolicies", requestBody);
-                //    break;
-                //case 11: //create SAS locator: Type: 1
-                //    requestBody = "{\"AccessPolicyId\": \"nb:pid:UUID:fbc28148-3e93-4bc9-892e-03579aa6d1c6\", \"AssetId\" : \"nb:cid:UUID:d29545ff-0300-80bd-fc4c-f1e4b3b939f8\", \"StartTime\" : \"2015-02-12T16:45:53\", \"Type\" : 1 }";
-                //    objXmlDocument = AMSClient.MakeRestCall("POST", acsBearerToken, mediaServicesApiServerUri, "Locators", requestBody);
-                //    break;
-                //case 13: //upload single file (Using Azure Storage REST API with SAS authentication)
-                //    path = @"C:\Workspace\Destination\Input\SingileFile\RexonaCommercial.mp4";
-                //    body = AzureStorageClient.GetBytesFromFile(path);
-                //    url = "https://willzhanstorage2.blob.core.windows.net/asset-d29545ff-0300-80bd-fc4c-f1e4b3b939f8/resttest.mp4?sv=2012-02-12&sr=c&si=a5397716-ffce-4909-afc7-971cc01f940c&sig=su%2FrtoyG5Vm9oDOirx1I4GRHaLSmk25z1w0tjhAG17I%3D&st=2015-02-12T16%3A45%3A53Z&se=2015-02-14T18%3A45%3A53Z";
-                //    objXmlDocument = AzureStorageClient.MakeRestCall("PUT", url, body);
-                //    break;
-                //case 14: //create IAsset metadata
-                //    string query = string.Format("assetid='{0}'", System.Web.HttpUtility.UrlEncode("nb:cid:UUID:d29545ff-0300-80bd-fc4c-f1e4b3b939f8"));
-                //    objXmlDocument = AMSClient.MakeRestCall("GET", acsBearerToken, mediaServicesApiServerUri, "CreateFileInfos", null, query: query);
-                //    break;
-                //case 15: //create a transcoding job
-                //    processorId = "nb:mpid:UUID:1b1da727-93ae-4e46-a8a1-268828765609";  //from 0, use the latest version of Azure Media Encoder
-                //    preset = "H264 Adaptive Bitrate MP4 Set 720p"; //https://msdn.microsoft.com/en-us/library/azure/dn619413.aspx
-                //    jobName = "Zype_Job_01";
-                //    outputAssetName = "Zype_Output_Asset_Name_01";
-                //    requestBody = string.Format("{{\"Name\" : \"{3}\", \"InputMediaAssets\" : [{{\"__metadata\" : {{\"uri\" : \"https://media.windows.net/api/Assets('{0}')\"}}}}],  \"Tasks\" : [{{\"Configuration\" : \"{4}\", \"MediaProcessorId\" : \"{1}\",  \"TaskBody\" : \"<?xml version=\\\"1.0\\\" encoding=\\\"utf-8\\\"?><taskBody><inputAsset>JobInputAsset(0)</inputAsset><outputAsset assetName=\\\"{2}\\\">JobOutputAsset(0)</outputAsset></taskBody>\"}}]}}", System.Web.HttpUtility.UrlEncode("nb:cid:UUID:e2ac45ff-0300-80bd-5ce6-f1e4b527b9fd"), processorId, outputAssetName, jobName, preset);
-                //    objXmlDocument = AMSClient.MakeRestCall("POST", acsBearerToken, mediaServicesApiServerUri, "Jobs", requestBody);
-                //    break;
-                //case 16: //create read access policy for origin locator, valid for about a year
-                //    requestBody = "{\"Name\": \"ReadAccessPolicy\", \"DurationInMinutes\" : \"500000\", \"Permissions\" : 1 }";
-                //    objXmlDocument = AMSClient.MakeRestCall("POST", acsBearerToken, mediaServicesApiServerUri, "AccessPolicies", requestBody);
-                //    break;
-                //case 17: //create origin locator: Type: 2
-                //    requestBody = string.Format("{{\"AccessPolicyId\": \"{0}\", \"AssetId\" : \"{1}\", \"StartTime\" : \"{2}\", \"Type\" : 2 }}", "nb:pid:UUID:8029a8c3-f845-4287-a998-befa81986453", "nb:cid:UUID:ae8245ff-0300-80bd-53b1-f1e4b5344be3", DateTime.UtcNow.AddDays(-1.0).ToString("yyyy-MM-ddTHH:mm:ss"));
-                //    objXmlDocument = AMSClient.MakeRestCall("POST", acsBearerToken, mediaServicesApiServerUri, "Locators", requestBody);
-                //    break;
+                case 11: //set AccessPolicy for writing
+                    requestBody = "{\"Name\": \"RESTTestAccessPolicy\", \"DurationInMinutes\" : \"3000\", \"Permissions\" : 2 }";
+                    objXmlDocument = AMSClient.MakeRestCall("POST", jwt, restapiuri, "AccessPolicies", requestBody);
+                    Console.WriteLine(objXmlDocument.OuterXml);
+                    break;
+                case 12: //create SAS locator: Type: 1
+                    assetId  = "nb:cid:UUID:5da1d9dc-b157-46d8-9d59-37139f152972";
+                    policyId = "nb:pid:UUID:cde5c349-c2e6-4de9-84b2-3a6548fac1a7";
+                    requestBody = string.Format("{{\"AccessPolicyId\": \"{0}\", \"AssetId\" : \"{1}\", \"StartTime\" : \"2017-10-24T16:45:53\", \"Type\" : 1 }}", policyId, assetId);
+                    objXmlDocument = AMSClient.MakeRestCall("POST", jwt, restapiuri, "Locators", requestBody);
+                    Console.WriteLine(objXmlDocument.OuterXml);
+                    break;
+                case 13: //upload single file (Using Azure Storage REST API with SAS authentication)
+                    path = @"C:\Workspace\Destination\Input\SingileFile\RexonaCommercial.mp4";  
+                    byte[] body = AzureStorageClient.GetBytesFromFile(path);
+                    //SAS URI of the empty container
+                    string sasUri = "https://partnerstorage1.blob.core.windows.net/asset-5da1d9dc-b157-46d8-9d59-37139f152972?sv=2012-02-12&sr=c&si=ad67bb92-d163-43ce-b60c-d1b150342265&sig=XHatAd16dI6apWDM%2B6SiAq0S1uo7stF5xwhMVDUSjvk%3D&st=2017-10-24T16%3A45%3A53Z&se=2017-10-26T18%3A45%3A53Z";
+                    //objXmlDocument = AzureStorageClient.MakeRestCall("PUT", url, body);
+                    objXmlDocument = AzureStorageClient.UploadBlobWithRestAPISasPermissionOnBlobContainer(sasUri, "RexonaCommercial.mp4", body);
+                    break;
+                case 14: //create IAsset metadata
+                    assetId = "nb:cid:UUID:5da1d9dc-b157-46d8-9d59-37139f152972";
+                    string query = string.Format("assetid='{0}'", System.Web.HttpUtility.UrlEncode(assetId));
+                    objXmlDocument = AMSClient.MakeRestCall("GET", jwt, restapiuri, "CreateFileInfos", null, query: query);
+                    break;
+                case 15: //create a transcoding job
+                    string processorId = "nb:mpid:UUID:ff4df607-d419-42f0-bc17-a481b1331e56";  //from id=0, use the latest version of Azure Media Encoder
+                    string preset = "Content Adaptive Multiple Bitrate MP4"; //https://docs.microsoft.com/en-us/azure/media-services/media-services-mes-presets-overview
+                    string jobName = "RETS_test_job01";
+                    string outputAssetName = "REST_test_output";
+                    assetId = "nb:cid:UUID:5da1d9dc-b157-46d8-9d59-37139f152972";
+                    requestBody = string.Format("{{\"Name\" : \"{3}\", \"InputMediaAssets\" : [{{\"__metadata\" : {{\"uri\" : \"https://media.windows.net/api/Assets('{0}')\"}}}}],  \"Tasks\" : [{{\"Configuration\" : \"{4}\", \"MediaProcessorId\" : \"{1}\",  \"TaskBody\" : \"<?xml version=\\\"1.0\\\" encoding=\\\"utf-8\\\"?><taskBody><inputAsset>JobInputAsset(0)</inputAsset><outputAsset assetName=\\\"{2}\\\">JobOutputAsset(0)</outputAsset></taskBody>\"}}]}}", System.Web.HttpUtility.UrlEncode(assetId), processorId, outputAssetName, jobName, preset);
+                    objXmlDocument = AMSClient.MakeRestCall("POST", jwt, restapiuri, "Jobs", requestBody);
+                    break;
+                case 16: //create read access policy for origin locator, valid for about a year
+                    requestBody = "{\"Name\": \"ReadAccessPolicy\", \"DurationInMinutes\" : \"500000\", \"Permissions\" : 1 }";
+                    objXmlDocument = AMSClient.MakeRestCall("POST", jwt, restapiuri, "AccessPolicies", requestBody);
+                    Console.WriteLine(objXmlDocument.OuterXml);
+                    break;
+                case 17: //create origin locator: Type: 2
+                    policyId = "nb:pid:UUID:db236678-29de-4a33-9e9f-9d10440a1722";
+                    assetId = "nb:cid:UUID:4f99a238-5da0-4e5a-b0f8-e60dc13c6406";
+                    requestBody = string.Format("{{\"AccessPolicyId\": \"{0}\", \"AssetId\" : \"{1}\", \"StartTime\" : \"{2}\", \"Type\" : 2 }}", policyId, assetId, DateTime.UtcNow.AddDays(-1.0).ToString("yyyy-MM-ddTHH:mm:ss"));
+                    objXmlDocument = AMSClient.MakeRestCall("POST", jwt, restapiuri, "Locators", requestBody);
+                    Console.WriteLine(objXmlDocument.OuterXml);
+                    break;
+                case 18: //list asset files (to get .ism file to build streaming URL)
+                    assetId = "nb:cid:UUID:4f99a238-5da0-4e5a-b0f8-e60dc13c6406";
+                    objXmlDocument = AMSClient.MakeRestCall("GET", jwt, restapiuri, string.Format("Assets('{0}')/Files", assetId), null);
+                    Console.WriteLine(objXmlDocument.OuterXml);
+                    foreach (XmlNode objXmlNode in objXmlDocument.GetElementsByTagName("Name"))
+                    {
+                        Console.WriteLine("{0,-55}", objXmlNode.InnerText);
+                    }
+                    break;
                 //case 18: //create a Indexer job
                 //    processorId = "nb:mpid:UUID:233e57fc-36bb-4f6f-8f18-3b662747a9f8";  //Indexer processor ID, from case 0
                 //    preset = System.IO.File.ReadAllText(@"..\..\MAVISConfig.xml");      //Indexer job needs a configuration file
@@ -166,11 +188,11 @@ namespace AMS.REST.Test
                 //    requestBody = string.Format("{{\"Name\" : \"{3}\", \"InputMediaAssets\" : [{{\"__metadata\" : {{\"uri\" : \"https://media.windows.net/api/Assets('{0}')\"}}}}],  \"Tasks\" : [{{\"Configuration\" : \"{4}\", \"MediaProcessorId\" : \"{1}\",  \"TaskBody\" : \"<?xml version=\\\"1.0\\\" encoding=\\\"utf-8\\\"?><taskBody><inputAsset>JobInputAsset(0)</inputAsset><outputAsset assetName=\\\"{2}\\\">JobOutputAsset(0)</outputAsset></taskBody>\"}}]}}", System.Web.HttpUtility.UrlEncode(assetId), processorId, outputAssetName, jobName, preset);
                 //    objXmlDocument = AMSClient.MakeRestCall("POST", acsBearerToken, mediaServicesApiServerUri, "Jobs", requestBody);
                 //    break;
-                //case 101:
-                //    path = @"C:\Workspace\Destination\Input\SingileFile\RexonaCommercial.mp4";
-                //    assetName = "ZypeRest07";
-                //    RunWorkflow(assetName, path, acsBearerToken, mediaServicesApiServerUri);
-                //    break;
+                case 101:
+                    path = @"C:\Workspace\Destination\Input\SingileFile\RexonaCommercial.mp4";
+                    string assetName = "RexonaCommercialRest";
+                    RunWorkflow(assetName, path, jwt, restapiuri);
+                    break;
                 //case 21: //scale StreamingEndpoint
                 //    requestBody = "{\"scaleUnits\" : 1}";  //“scaleUnit” in this case is not a property on an Entity, but rather a parameter passed to the Scale action on an StreamingEndpoint entity (The POST request below is to invoke the action). I believe the parameter name has to internally exactly match (unfortunately not case insensitive match) the parameter name in the signature of our C# method that gets called for this action. As coding convention, first letter of a parameter should be lower case, which led to this effect.
                 //    resourcePath = string.Format("StreamingEndpoints('{0}')/Scale", System.Web.HttpUtility.UrlEncode("nb:oid:UUID:364e57ac-35be-0d26-05f5-6fd00b3f33fd"));
@@ -198,7 +220,7 @@ namespace AMS.REST.Test
             Console.ReadKey();
         }
 
-        private static void RunWorkflow(string assetName, string path, string acsBearerToken, string mediaServicesApiServerUri)
+        private static void RunWorkflow(string assetName, string path, string jwt, string restapiuri)
         {
             //variables
             string requestBody, assetId = string.Empty, policyId = string.Empty, policyName, locatorPath = string.Empty;
@@ -206,30 +228,30 @@ namespace AMS.REST.Test
 
             //create empty IAsset
             requestBody = string.Format("{{\"Name\":\"{0}\"}}", assetName);
-            objXmlDocument = AMSClient.MakeRestCall("POST", acsBearerToken, mediaServicesApiServerUri, "Assets", requestBody);
+            objXmlDocument = AMSClient.MakeRestCall("POST", jwt, restapiuri, "Assets", requestBody);
             Console.WriteLine("An empty IAsset with name {0} is created.", assetName);
 
             //get assetId
-            assetId = GetAssetId(assetName, acsBearerToken, mediaServicesApiServerUri);
+            assetId = GetAssetId(assetName, jwt, restapiuri);
             Console.WriteLine("IAsset.Id = {0}", assetId);
 
             //create write access policy for SAS
             policyName = string.Format("{0}_sas_access_policy", assetName);
             requestBody = string.Format("{{\"Name\": \"{0}\", \"DurationInMinutes\" : \"3000\", \"Permissions\" : 2 }}", policyName);
-            objXmlDocument = AMSClient.MakeRestCall("POST", acsBearerToken, mediaServicesApiServerUri, "AccessPolicies", requestBody);
+            objXmlDocument = AMSClient.MakeRestCall("POST", jwt, restapiuri, "AccessPolicies", requestBody);
             Console.WriteLine("Access policy with name {0} is created.", policyName);
 
             //get policyId
-            policyId = GetAccessPolicyId(policyName, acsBearerToken, mediaServicesApiServerUri);
+            policyId = GetAccessPolicyId(policyName, jwt, restapiuri);
             Console.WriteLine("For SAS URI: IAccessPolicy.Name = {0}, IAccessPolicy.Id = {1}", policyName, policyId);
 
             //create SAS locator
             requestBody = string.Format("{{\"AccessPolicyId\": \"{0}\", \"AssetId\" : \"{1}\", \"StartTime\" : \"{2}\", \"Type\" : 1 }}", policyId, assetId, DateTime.UtcNow.AddDays(-1.0).ToString("yyyy-MM-ddTHH:mm:ss"));
-            objXmlDocument = AMSClient.MakeRestCall("POST", acsBearerToken, mediaServicesApiServerUri, "Locators", requestBody);
+            objXmlDocument = AMSClient.MakeRestCall("POST", jwt, restapiuri, "Locators", requestBody);
             Console.WriteLine("SAS locator created with policy Id = {0} for asset Id = {1}", policyId, assetId);
 
             //get SAS locator path
-            objXmlDocument = AMSClient.MakeRestCall("GET", acsBearerToken, mediaServicesApiServerUri, "Locators", null);
+            objXmlDocument = AMSClient.MakeRestCall("GET", jwt, restapiuri, "Locators", null);
             foreach (XmlNode objXmlNode in objXmlDocument.GetElementsByTagName("Id"))
             {
                 if ((objXmlNode.ParentNode.SelectSingleNode("AssetId").InnerText == assetId) && (objXmlNode.ParentNode.SelectSingleNode("Type").InnerText == "1"))   //SAS, Type=1
@@ -240,51 +262,51 @@ namespace AMS.REST.Test
             }
             Console.WriteLine("SAS locator path = {0}", locatorPath);
 
-            //modify locator path to point to the mezzanine
+            //modify SAS locator path to point to the mezzanine in Azure Storage
             string filename = System.IO.Path.GetFileName(path);
-            locatorPath = locatorPath.Replace("?", "/" + filename + "?");
+            //locatorPath = locatorPath.Replace("?", "/" + filename + "?");  //this is not needed, this is done inside AzureStorageClient.UploadBlobWithRestAPISasPermissionOnBlobContainer
             Console.WriteLine("Full SAS URI for upload mezzanine = {0}", locatorPath);
 
             //upload single file (Using Azure Storage REST API with SAS authentication)
             byte[] body = AzureStorageClient.GetBytesFromFile(path);
             Console.WriteLine("File upload starts ...");
-            objXmlDocument = AzureStorageClient.MakeRestCall("PUT", locatorPath, body);
+            //objXmlDocument = AzureStorageClient.MakeRestCall("PUT", locatorPath, body);
+            objXmlDocument = AzureStorageClient.UploadBlobWithRestAPISasPermissionOnBlobContainer(locatorPath, filename, body);
             Console.WriteLine("File upload completes");
 
             //create IAsset metadata
             string query = string.Format("assetid='{0}'", System.Web.HttpUtility.UrlEncode(assetId));
-            objXmlDocument = AMSClient.MakeRestCall("GET", acsBearerToken, mediaServicesApiServerUri, "CreateFileInfos", null, query: query);
+            objXmlDocument = AMSClient.MakeRestCall("GET", jwt, restapiuri, "CreateFileInfos", null, query: query);
             Console.WriteLine("Mezzanine asset creation completes, ready to be transcoded.");
 
             //create and a transcoding job
-            string processorId = "nb:mpid:UUID:1b1da727-93ae-4e46-a8a1-268828765609";  //from case 0, use the latest version of Azure Media Encoder
-            string preset = "H264 Adaptive Bitrate MP4 Set 720p";                      //from https://msdn.microsoft.com/en-us/library/azure/dn619413.aspx
-            string jobName = "Zype_Job_01";
+            string processorId = "nb:mpid:UUID:ff4df607-d419-42f0-bc17-a481b1331e56";  //from id=0, use the latest version of Azure Media Encoder
+            string preset = "Content Adaptive Multiple Bitrate MP4"; //https://docs.microsoft.com/en-us/azure/media-services/media-services-mes-presets-overview
+            string jobName = string.Format("{0}_encode_job", assetName);
             string outputAssetName = string.Format("Output_Asset_{0}", assetName);
-            //double quotes in XML need to be escaped in the output
             requestBody = string.Format("{{\"Name\" : \"{3}\", \"InputMediaAssets\" : [{{\"__metadata\" : {{\"uri\" : \"https://media.windows.net/api/Assets('{0}')\"}}}}],  \"Tasks\" : [{{\"Configuration\" : \"{4}\", \"MediaProcessorId\" : \"{1}\",  \"TaskBody\" : \"<?xml version=\\\"1.0\\\" encoding=\\\"utf-8\\\"?><taskBody><inputAsset>JobInputAsset(0)</inputAsset><outputAsset assetName=\\\"{2}\\\">JobOutputAsset(0)</outputAsset></taskBody>\"}}]}}", System.Web.HttpUtility.UrlEncode(assetId), processorId, outputAssetName, jobName, preset);
-            objXmlDocument = AMSClient.MakeRestCall("POST", acsBearerToken, mediaServicesApiServerUri, "Jobs", requestBody);
+            objXmlDocument = AMSClient.MakeRestCall("POST", jwt, restapiuri, "Jobs", requestBody);
             Console.WriteLine("AMS encoder job submitted with preset: \"{0}\"", preset);
 
             //create read access policy for origin locator, valid for about a year
             policyName = string.Format("{0}_origin_access_policy", assetName);
             requestBody = string.Format("{{\"Name\": \"{0}\", \"DurationInMinutes\" : \"500000\", \"Permissions\" : 1 }}", policyName);
-            objXmlDocument = AMSClient.MakeRestCall("POST", acsBearerToken, mediaServicesApiServerUri, "AccessPolicies", requestBody);
+            objXmlDocument = AMSClient.MakeRestCall("POST", jwt, restapiuri, "AccessPolicies", requestBody);
 
             //retrieve the read access policy ID
-            policyId = GetAccessPolicyId(policyName, acsBearerToken, mediaServicesApiServerUri);
+            policyId = GetAccessPolicyId(policyName, jwt, restapiuri);
             Console.WriteLine("For origin URI: IAccessPolicy.Name = {0}, IAccessPolicy.Id = {1}", policyName, policyId);
 
             //get job output asset ID to be published
-            assetId = GetAssetId(outputAssetName, acsBearerToken, mediaServicesApiServerUri);
+            assetId = GetAssetId(outputAssetName, jwt, restapiuri);
 
             //create origin locator: Type: 2
             requestBody = string.Format("{{\"AccessPolicyId\": \"{0}\", \"AssetId\" : \"{1}\", \"StartTime\" : \"{2}\", \"Type\" : 2 }}", policyId, assetId, DateTime.UtcNow.AddDays(-1.0).ToString("yyyy-MM-ddTHH:mm:ss"));
-            objXmlDocument = AMSClient.MakeRestCall("POST", acsBearerToken, mediaServicesApiServerUri, "Locators", requestBody);
+            objXmlDocument = AMSClient.MakeRestCall("POST", jwt, restapiuri, "Locators", requestBody);
             Console.WriteLine("Asset {0} has been published", assetId);
 
             //get origin locator path
-            objXmlDocument = AMSClient.MakeRestCall("GET", acsBearerToken, mediaServicesApiServerUri, "Locators", null);
+            objXmlDocument = AMSClient.MakeRestCall("GET", jwt, restapiuri, "Locators", null);
             foreach (XmlNode objXmlNode in objXmlDocument.GetElementsByTagName("Id"))
             {
                 if ((objXmlNode.ParentNode.SelectSingleNode("AssetId").InnerText == assetId) && (objXmlNode.ParentNode.SelectSingleNode("Type").InnerText == "2"))   //origin, Type=2
@@ -295,13 +317,13 @@ namespace AMS.REST.Test
             }
             Console.WriteLine("Origin locator path = {0}", locatorPath);
             Console.WriteLine("Origin URL: {0}{1}.ism/manifest", locatorPath, System.IO.Path.GetFileNameWithoutExtension(path));
-            Console.WriteLine("Playback URL: {0}?url={1}{2}.ism/manifest", "http://openidconnectweb.azurewebsites.net/OpenAMPlayer", locatorPath, System.IO.Path.GetFileNameWithoutExtension(path));
+            Console.WriteLine("Playback URL: {0}?url={1}{2}.ism/manifest", "http://aka.ms/amtest", locatorPath, System.IO.Path.GetFileNameWithoutExtension(path));
         }
 
-        private static string GetAccessPolicyId(string policyName, string acsBearerToken, string mediaServicesApiServerUri)
+        private static string GetAccessPolicyId(string policyName, string jwt, string restapiuri)
         {
             string policyId = string.Empty;
-            XmlDocument objXmlDocument = AMSClient.MakeRestCall("GET", acsBearerToken, mediaServicesApiServerUri, "AccessPolicies", null);
+            XmlDocument objXmlDocument = AMSClient.MakeRestCall("GET", jwt, restapiuri, "AccessPolicies", null);
             foreach (XmlNode objXmlNode in objXmlDocument.GetElementsByTagName("Id"))
             {
                 if (objXmlNode.ParentNode.SelectSingleNode("Name").InnerText.ToLower() == policyName.ToLower())
@@ -314,10 +336,10 @@ namespace AMS.REST.Test
             return policyId;
         }
 
-        private static string GetAssetId(string assetName, string acsBearerToken, string mediaServicesApiServerUri)
+        private static string GetAssetId(string assetName, string jwt, string restapiuri)
         {
             string assetId = string.Empty;
-            XmlDocument objXmlDocument = AMSClient.MakeRestCall("GET", acsBearerToken, mediaServicesApiServerUri, "Assets", null);
+            XmlDocument objXmlDocument = AMSClient.MakeRestCall("GET", jwt, restapiuri, "Assets", null);
             foreach (XmlNode objXmlNode in objXmlDocument.GetElementsByTagName("Id"))
             {
                 if (objXmlNode.ParentNode.SelectSingleNode("Name").InnerText.ToLower() == assetName.ToLower())

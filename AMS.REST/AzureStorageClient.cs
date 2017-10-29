@@ -12,6 +12,44 @@ namespace AMS.REST
 {
     public class AzureStorageClient
     {
+        public static XmlDocument UploadBlobWithRestAPISasPermissionOnBlobContainer(string blobContainerSasUri, string blobName, byte[] blobContent)
+        {
+            XmlDocument objXmlDocument = null;
+            int contentLength = blobContent.Length;
+            string queryString = (new Uri(blobContainerSasUri)).Query;
+            string blobContainerUri = blobContainerSasUri.Split('?')[0];
+            string requestUri = string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0}/{1}{2}", blobContainerUri, blobName, queryString);
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(requestUri);
+            request.Method = "PUT";
+            request.Headers.Add("x-ms-blob-type", "BlockBlob");
+            request.ContentLength = contentLength;
+            using (Stream requestStream = request.GetRequestStream())
+            {
+                requestStream.Write(blobContent, 0, contentLength);
+            }
+            using (HttpWebResponse objHttpWebResponse = (HttpWebResponse)request.GetResponse())
+            {
+                using (Stream responseStream = objHttpWebResponse.GetResponseStream())
+                {
+                    using (StreamReader stream = new StreamReader(responseStream))
+                    {
+                        string responseString = stream.ReadToEnd();
+                        if (!string.IsNullOrEmpty(responseString))
+                        {
+                            XmlDictionaryReader objXmlDictionaryReader = JsonReaderWriterFactory.CreateJsonReader(Encoding.UTF8.GetBytes(responseString), new XmlDictionaryReaderQuotas());
+
+                            objXmlDocument = new XmlDocument();
+                            objXmlDictionaryReader.Read();
+                            objXmlDocument.LoadXml(objXmlDictionaryReader.ReadInnerXml());
+                        }
+                    }
+                }
+            }
+
+            return objXmlDocument;
+        }
+
+
         public static XmlDocument MakeRestCall(string verb, string url, byte[] body)
         {
             XmlDocument objXmlDocument = null;
@@ -61,7 +99,7 @@ namespace AMS.REST
             request.Method = verb;
 
             request.ContentType = "application/atom+xml";  // "application/json;odata=verbose";
-            request.Headers.Add("x-ms-date", DateTime.UtcNow.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+            //request.Headers.Add("x-ms-date", DateTime.UtcNow.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
             request.Headers.Add("x-ms-blob-type", "BlockBlob");
 
             if (body != null)
